@@ -177,38 +177,30 @@ load_image(ImageMode mode, const char *arg, int alpha, Imlib_Image rootimg, Xine
 
       imlib_blend_image_onto_image(buffer, 0, (imgW - iwidth) / 2, (imgH - iheight) / 2, iwidth, iheight, o.x_org, o.y_org, o.width, o.height);
     } else if ((mode == Full) || (mode == Xtend)) {
-      double aspect = ((double) o.width) / imgW;
-      if ((int) (imgH * aspect) > o.height)
-        aspect = (double) o.height / (double) imgH;
+      int swidth = MIN(o.width, o.height * imgW / imgH);
+      int sheight = MIN(o.height, o.width * imgH / imgW);
+      int top = (o.height - sheight) / 2;
+      int left = (o.width - swidth) / 2;
 
-      int top = (o.height - (int) (imgH * aspect)) / 2;
-      int left = (o.width - (int) (imgW * aspect)) / 2;
-
-      imlib_blend_image_onto_image(buffer, 0, 0, 0, imgW, imgH, o.x_org + left, o.y_org + top, (int) (imgW * aspect), (int) (imgH * aspect));
+      imlib_blend_image_onto_image(buffer, 0, 0, 0, imgW, imgH, o.x_org + left, o.y_org + top, swidth, sheight);
 
       if (mode == Xtend) {
-        int w;
-
         if (left > 0) {
-          int right = left - 1 + (int) (imgW * aspect);
-          /* check only the right border - left is int divided so the right border is larger */
-          for (w = 1; right + w < o.width; w <<= 1) {
-            imlib_image_copy_rect(o.x_org + left + 1 - w, o.y_org, w, o.height, o.x_org + left + 1 - w - w, o.y_org);
-            imlib_image_copy_rect(o.x_org + right, o.y_org, w, o.height, o.x_org + right + w, o.y_org);
-          }
+          int right = left + swidth;
+          imlib_blend_image_onto_image(buffer, 0, 0, 0, 1, imgH, o.x_org, o.y_org, left, o.height);
+          imlib_blend_image_onto_image(buffer, 0, imgW - 1, 0, 1, imgH, o.x_org + right, o.y_org, o.width - right, o.height);
         }
 
         if (top > 0) {
-          int bottom = top - 1 + (int) (imgH * aspect);
-          for (w = 1; (bottom + w < o.height); w <<= 1) {
-            imlib_image_copy_rect(o.x_org, o.y_org + top + 1 - w, o.width, w, o.x_org, o.y_org + top + 1 - w - w);
-            imlib_image_copy_rect(o.x_org, o.y_org + bottom, o.width, w, o.x_org, o.y_org + bottom + w);
-          }
+          int bottom = top + sheight;
+          imlib_blend_image_onto_image(buffer, 0, 0, 0, imgW, 1, o.x_org, o.y_org, o.width, top);
+          imlib_blend_image_onto_image(buffer, 0, 0, imgH - 1, imgW, 1, o.x_org, o.y_org + bottom, o.width, o.height - bottom);
         }
       }
     } else {  // Center || Tile
       int left = (o.width - imgW) / 2;
       int top = (o.height - imgH) / 2;
+
 
       if (mode == Tile) {
         int x, y;
